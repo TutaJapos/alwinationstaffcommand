@@ -181,7 +181,7 @@ const COMMANDS = [
     ],
     permission: 'co.inspect',
   },
-    {
+  {
     id: 'co-lookup',
     name: '/co lookup',
     aliases: ['/co l'],

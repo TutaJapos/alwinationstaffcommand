@@ -506,6 +506,26 @@ function renderCommandDetail(cmd) {
     `;
   }
 
+  // CoreProtect actions
+  if (cmd.actions && cmd.actions.length) {
+    const rows = cmd.actions.map(action => `
+      <tr>
+        <td><code class="filter-code">${escapeHtml(action.code)}</code></td>
+        <td>${escapeHtml(action.name)}</td>
+        <td>${escapeHtml(action.desc)}</td>
+      </tr>
+    `).join('');
+    body += `
+      <div class="section-block">
+        <div class="section-block-title"><span class="title-icon">◈</span>Actions</div>
+        <table class="filters-table">
+          <thead><tr><th>Action</th><th>Name</th><th>Description</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
   // Example
   if (cmd.examples && cmd.examples.length) {
     const examples = cmd.examples.map(e => `
