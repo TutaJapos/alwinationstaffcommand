@@ -181,7 +181,7 @@ const COMMANDS = [
     ],
     permission: 'co.inspect',
   },
-  {
+    {
     id: 'co-lookup',
     name: '/co lookup',
     aliases: ['/co l'],
@@ -197,6 +197,38 @@ const COMMANDS = [
       { filter: 'r:[radius]', function: 'Radius area', example: 'r:10' },
       { filter: 'a:[action]', function: 'Jenis perubahan', example: 'a:block' },
     ],
+
+    actions: [
+    { code: 'a:block', name: 'Blok', desc: 'Blok yang diletakkan/dihancurkan.' },
+    { code: 'a:+block', name: 'Blok diletakkan', desc: 'Blok yang diletakkan.' },
+    { code: 'a:-block', name: 'Blok dihancurkan', desc: 'Blok yang dihancurkan.' },
+    { code: 'a:chat', name: 'Chat', desc: 'Pesan yang dikirim di chat.' },
+    { code: 'a:click', name: 'Click', desc: 'Interaksi pemain.' },
+    { code: 'a:command', name: 'Command', desc: 'Perintah yang digunakan.' },
+    { code: 'a:container', name: 'Container', desc: 'Item diambil atau dimasukkan ke peti.' },
+    { code: 'a:+container', name: 'Item dimasukkan', desc: 'Item dimasukkan ke peti.' },
+    { code: 'a:-container', name: 'Item diambil', desc: 'Item diambil dari peti.' },
+    { code: 'a:inventory', name: 'Inventory', desc: 'Item ditambahkan atau dihapus dari inventori pemain.' },
+    { code: 'a:+inventory', name: 'Item ditambahkan', desc: 'Item ditambahkan ke inventori.' },
+    { code: 'a:-inventory', name: 'Item dihapus', desc: 'Item dihapus dari inventori.' },
+    { code: 'a:item', name: 'Item', desc: 'Item dijatuhkan, dilempar, diambil, disimpan, atau ditarik.' },
+    { code: 'a:+item', name: 'Item diambil/ditarik', desc: 'Item diambil atau ditarik.' },
+    { code: 'a:-item', name: 'Item dijatuhkan/dilempar', desc: 'Item dijatuhkan, dilempar, atau disimpan.' },
+    { code: 'a:kill', name: 'Kill', desc: 'Mobs atau hewan yang dibunuh.' },
+    { code: 'a:session', name: 'Session', desc: 'Pemain login/logout.' },
+    { code: 'a:+session', name: 'Player login', desc: 'Pemain login.' },
+    { code: 'a:-session', name: 'Player logout', desc: 'Pemain logout.' },
+    { code: 'a:sign', name: 'Sign', desc: 'Pesan yang ditulis di papan.' },
+    { code: 'a:username', name: 'Username', desc: 'Perubahan nama pengguna.' },
+    ],
+
+    notes: [
+      'Gunakan filter t: untuk menentukan rentang waktu (misal: t:1h untuk 1 jam terakhir).',
+      'Gunakan filter u: untuk menentukan player yang ingin dilacak.',
+      'Gunakan filter r: untuk menentukan radius area pencarian.',
+      'Gunakan filter a: untuk menentukan jenis perubahan yang ingin dicari.',
+    ],
+
     examples: ['/co lookup u:Steve t:1h r:10 a:block'],
     permission: 'co.lookup',
   },
