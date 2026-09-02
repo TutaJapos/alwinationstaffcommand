@@ -318,7 +318,6 @@ function renderDashboard() {
     return `
       <a href="${staffRoute(rank.id)}" class="rank-card" data-nav>
         <span class="rank-card-badge">${escapeHtml(rank.name)}</span>
-        <span class="rank-card-level">LEVEL ${rank.level}</span>
         <div class="rank-card-rank">${escapeHtml(rank.name)}</div>
         <div class="rank-card-desc">${escapeHtml(rank.shortDesc)}</div>
         <span class="rank-card-cmd-count">${cmdCount} commands</span>
