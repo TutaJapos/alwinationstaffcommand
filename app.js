@@ -381,37 +381,6 @@ const COMMANDS = [
     description:
       'Untuk mendata tiket apa saja yang dikerjakan oleh staff sebagai bahan evaluasi.',
   },
-
-  // ---- DOCUMENTATION ----
-  {
-    id: 'coreprotect-guide',
-    name: 'CoreProtect Investigation Guide',
-    type: 'Documentation',
-    categories: ['CoreProtect', 'Investigation'],
-    minimumRank: 'J-Helper',
-    description:
-      'Panduan lengkap penggunaan /co inspect dan /co lookup untuk investigasi perubahan di server.',
-    isDocumentation: true,
-  },
-  {
-    id: 'java-bedrock',
-    name: 'Java & Bedrock Player Name',
-    type: 'Documentation',
-    categories: ['Utility'],
-    minimumRank: 'J-Helper',
-    description:
-      'Penjelasan perbedaan format nama player antara Java Edition dan Bedrock Edition.',
-    isDocumentation: true,
-  },
-  {
-    id: 'server-realm',
-    name: 'Server Parameter',
-    type: 'Documentation',
-    categories: ['Utility'],
-    minimumRank: 'J-Helper',
-    description: 'Penjelasan parameter server:<realm> dan pengaruhnya terhadap punishment.',
-    isDocumentation: true,
-  },
 ];
 
 // ----------------------------------------------------------------------------

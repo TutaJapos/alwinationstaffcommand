@@ -10,6 +10,7 @@
   const loginUsername = document.getElementById('loginUsername');
   const loginPassword = document.getElementById('loginPassword');
   const loginError = document.getElementById('loginError');
+  const DEV_BYPASS_LOGIN = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 
   if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
@@ -58,6 +59,11 @@
   }
 
   async function checkSession() {
+    if (DEV_BYPASS_LOGIN) {
+      setAuthenticated(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/session', {
         credentials: 'same-origin',
@@ -84,7 +90,7 @@
   const toast = document.getElementById('toast');
 
   if (loginForm) loginForm.addEventListener('submit', authenticate);
-  setAuthenticated(false);
+  setAuthenticated(DEV_BYPASS_LOGIN);
 
   // ---- Navigation (hash-based routing) ----
   let commandFilters = { rank: 'all', type: 'all', category: 'all' };
@@ -131,6 +137,9 @@
       case 'dashboard':
         renderDashboard();
         break;
+      case 'regulation':
+        renderRegulation();
+        break;
       case 'commands':
         renderCommands(null, commandFilters);
         break;
@@ -142,6 +151,9 @@
         break;
       case 'staff':
         renderStaffList();
+        break;
+      case 'staff-features':
+        renderStaffFeatures();
         break;
       case 'staff-role':
         renderStaffRole(route.rankId);
@@ -197,6 +209,18 @@
     if (route.type === 'commands' || route.type === 'commands-minecraft' || route.type === 'commands-discord') {
       renderCommands(null, commandFilters);
     }
+  });
+
+  document.addEventListener('input', (e) => {
+    if (e.target.id !== 'regulationSearch') return;
+    regulationState.query = e.target.value;
+    updateRegulationResults();
+  });
+
+  document.addEventListener('change', (e) => {
+    if (e.target.id !== 'regulationSectionFilter') return;
+    regulationState.section = e.target.value;
+    renderRegulation();
   });
 
   // ---- Hashchange (back/forward) ----

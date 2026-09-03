@@ -44,6 +44,7 @@ function parseRoute() {
   const path = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
 
   if (path.length === 0) return { type: 'dashboard' };
+  if (path[0] === 'regulation' && path.length === 1) return { type: 'regulation' };
 
   if (path[0] === 'commands') {
     if (path[1] === 'minecraft') return { type: 'commands-minecraft' };
@@ -51,6 +52,8 @@ function parseRoute() {
     if (!path[1]) return { type: 'commands' };
     return { type: 'not-found' };
   }
+
+  if (path[0] === 'staff-features' && path.length === 1) return { type: 'staff-features' };
 
   if (path[0] === 'staff') {
     if (!path[1]) return { type: 'staff' };
@@ -107,7 +110,6 @@ function commandCard(cmd) {
     <a href="${commandRoute(cmd)}" class="command-card" data-nav>
       <div class="command-card-header">
         <span class="command-name">${escapeHtml(cmd.name)}</span>
-        <span class="command-rank-badge">${escapeHtml(cmd.minimumRank)}</span>
       </div>
       ${cats ? `<div class="command-category-row">${cats}</div>` : ''}
       <p class="command-description">${escapeHtml(cmd.description)}</p>
@@ -286,7 +288,7 @@ function docCard(cmd) {
 // ---- DASHBOARD ----
 
 function renderDashboard() {
-  const totalCmds = ALWINA.countCommandsForRank('j-helper');
+  const totalCmds = ALWINA.COMMANDS.filter(command => command.name.startsWith('/')).length;
   const mcCount = ALWINA.countByType('Minecraft');
   const discordCount = ALWINA.countByType('Discord');
   const sfCount = ALWINA.countByType('Staff Feature');
@@ -307,24 +309,9 @@ function renderDashboard() {
       <div class="stat-value">${discordCount}</div>
       <div class="stat-label">Discord Commands</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-value">${rankCount}</div>
-      <div class="stat-label">Staff Roles</div>
-    </div>
   `;
 
-  const staffCards = ALWINA.STAFF_RANKS.map(rank => {
-    const cmdCount = ALWINA.countCommandsForRank(rank.id);
-    return `
-      <a href="${staffRoute(rank.id)}" class="rank-card" data-nav>
-        <span class="rank-card-badge">${escapeHtml(rank.name)}</span>
-        <div class="rank-card-rank">${escapeHtml(rank.name)}</div>
-        <div class="rank-card-desc">${escapeHtml(rank.shortDesc)}</div>
-        <span class="rank-card-cmd-count">${cmdCount} commands</span>
-        <span class="rank-card-btn btn btn-primary btn-sm">View Commands</span>
-      </a>
-    `;
-  }).join('');
+  const commandCards = ALWINA.COMMANDS.slice(4, 10).map(commandCard).join('');
 
   const html = `
     <div class="page-header">
@@ -342,8 +329,8 @@ function renderDashboard() {
       </div>
     </div>
     <div class="stats-grid">${statCards}</div>
-    <h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:14px;">Quick Staff Access</h3>
-    <div class="rank-cards-grid">${staffCards}</div>
+    <h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);margin-bottom:14px;">Quick Commands</h3>
+    <div class="commands-grid">${commandCards}</div>
   `;
   render(MAIN, html);
 }
@@ -365,8 +352,6 @@ function renderCommands(page, filters) {
     { value: 'all', label: 'All Types', active: filters.type === 'all' },
     { value: 'Minecraft', label: 'Minecraft', active: filters.type === 'Minecraft' },
     { value: 'Discord', label: 'Discord', active: filters.type === 'Discord' },
-    { value: 'Staff Feature', label: 'Staff Feature', active: filters.type === 'Staff Feature' },
-    { value: 'Documentation', label: 'Documentation', active: filters.type === 'Documentation' },
   ];
 
   const catOptions = [
@@ -391,7 +376,7 @@ function renderCommands(page, filters) {
   ).join('');
 
   // Compute filtered commands
-  let cmds = ALWINA.COMMANDS;
+  let cmds = ALWINA.COMMANDS.filter(command => command.name.startsWith('/'));
 
   if (filters.rank !== 'all') {
     cmds = cmds.filter(c => ALWINA.canUseCommand(filters.rank, c));
@@ -728,6 +713,22 @@ function renderStaffList() {
   render(MAIN, html);
 }
 
+function renderStaffFeatures() {
+  const features = ALWINA.COMMANDS.filter(cmd => cmd.type === 'Staff Feature');
+  const cards = features.map(staffFeatureCard).join('');
+
+  const html = `
+    <div class="page-header">
+      <div class="page-header-top">
+        <h1 class="page-title">Staff Features</h1>
+        <p class="page-subtitle">Features and tools available to AlwiNation staff.</p>
+      </div>
+    </div>
+    <div class="commands-grid">${cards}</div>
+  `;
+  render(MAIN, html);
+}
+
 // ---- DOCS: CoreProtect ----
 
 function renderCoreProtect() {
@@ -972,6 +973,183 @@ function renderAbout() {
   render(MAIN, html);
 }
 
+// ---- REGULATION PAGE ----
+// Source: REGULATIONS ALWINATION.pdf (updated 13/08/2026).
+const REGULATION_SECTIONS = [
+  {
+    number: '1', title: 'Peraturan Umum',
+    jurisdiction: 'Berlaku bagi semua anggota komunitas AlwiNation, baik di dalam game Minecraft maupun di server Discord.',
+    groups: [
+      { number: '1.1', title: 'Etika dan Perilaku', rules: [
+        ['1.1.1', 'Hormati Sesama', 'Setiap anggota wajib menghormati Pemain lain, Staff, maupun Owner tanpa memandang ras, agama, gender, usia, jabatan, atau latar belakang. Segala bentuk penghinaan, pelecehan, ejekan, provokasi, maupun tindakan merendahkan terhadap Pemain lain, Staff, maupun Owner tidak diperbolehkan.', 'Peringatan → Mute/Time Out 10 menit → Ban 1 hari → Ban permanen.'],
+        ['1.1.2', 'Bahasa yang Sopan', 'Gunakan bahasa yang sopan dalam semua komunikasi. Hindari kata-kata kasar, kotor, atau yang dapat menyinggung orang lain.', 'Peringatan → Mute/Time Out 10 menit → Ban 1 hari → Ban permanen.'],
+        ['1.1.3', 'Larangan Perilaku Toxic', 'Tidak diperbolehkan trolling, memprovokasi, atau menyebarkan kebencian, baik secara langsung maupun tidak langsung.', 'Peringatan → Mute/Time Out 10 menit → Ban 1 hari → Ban permanen.'],
+      ]},
+      { number: '1.2', title: 'Konten yang Dilarang', rules: [
+        ['1.2.1', 'Konten Terlarang', 'Dilarang membahas, memprovokasi, maupun memperdebatkan topik sensitif yang berpotensi menimbulkan konflik, keributan, atau perpecahan di dalam komunitas. Topik seperti politik, SARA, atau konflik sosial yang berpotensi menimbulkan perpecahan tidak diperkenankan dibahas di komunitas.', 'Ban 7 hari → Ban 30 hari → Ban permanen.'],
+        ['1.2.2', 'Pembahasan Sensitif', 'Topik seperti politik, SARA, atau konflik sosial yang berpotensi menimbulkan perpecahan tidak diperkenankan dibahas di komunitas.', 'Mute 10 menit → Ban 1 hari → Ban permanen.'],
+      ]},
+      { number: '1.3', title: 'Keamanan dan Privasi', rules: [
+        ['1.3.1', 'Informasi Pribadi', 'Dilarang menyebarkan informasi pribadi orang lain tanpa izin, seperti alamat, nomor telepon, identitas, atau foto.', 'Ban 30 hari → Ban 90 hari → Ban permanen & IP.'],
+        ['1.3.2', 'Keamanan Akun', 'Pemain bertanggung jawab penuh atas keamanan akun mereka. Jika akun disalahgunakan karena kelalaian, sanksi tetap berlaku.', 'Disesuaikan dengan jenis pelanggaran.'],
+      ]},
+      { number: '1.4', title: 'Nama dan Identitas', rules: [
+        ['1.4.1', 'Nama Tidak Pantas', 'Dilarang menggunakan nama karakter, tim, pulau, mob, atau item dengan unsur pornografi, SARA, politik, iklan, atau penghinaan.', 'Ganti nama dalam 1x24 jam & Peringatan → Ban permanen.'],
+        ['1.4.2', 'UU ITE', 'Tindakan yang melanggar hukum Indonesia, seperti pencemaran nama baik, penyebaran hoaks, atau pelanggaran hak cipta akan ditindak tegas.', 'Ban permanen dan IP.'],
+      ]},
+    ],
+  },
+  {
+    number: '2', title: 'Peraturan Server Minecraft',
+    jurisdiction: 'Berlaku untuk seluruh pemain Minecraft di server AlwiNation.',
+    groups: [
+      { number: '2.1', title: 'Fair Play dalam Gameplay', rules: [
+        ['2.1.1', 'Penyalahgunaan Fitur Game', 'Dilarang menggunakan fitur, sistem, maupun command server secara tidak semestinya atau menyimpang dari fungsi aslinya untuk memperoleh keuntungan pribadi.', 'Peringatan → TempMute 1 jam → Jail 24 jam & AdsMute Permanen.'],
+        ['2.1.1.1', 'Abuse Auction House', 'Melakukan rename item dengan tujuan untuk mempromosikan PW, melakukan penipuan (scam), atau menjual item tersebut melalui /AH (Auction House).', 'Ban 7 Hari → Permanen'],
+        ['2.1.2', 'Cheating/Hacking', 'Menggunakan perangkat tambahan, modifikasi client, maupun metode lainnya yang memberikan keuntungan tidak adil dibanding pemain lain. Termasuk dalam kategori pelanggaran berikut:', ''],
+        ['2.1.2.1', 'X-Ray & FreeCam - Cheating/Unfair Advantage', 'Menggunakan Texture/Resource Pack, Modifikasi, atau Client yang memungkinkan pemain melihat menembus block untuk memperoleh keuntungan.', 'Ban 3 hari→ Ban 7 hari → Ban permanen.'],
+        ['2.1.2.2', 'Auto-Clicker - Cheating/Unfair Advantage', 'Menggunakan Modifikasi client maupun Modifikasi eksternal, termasuk program pihak ketiga, mouse clicker, mouse macro, dan sejenisnya yang memodifikasi timing atau pola klik untuk memperoleh keuntungan pribadi. Pengecualian hanya diberikan untuk fitur Hold Left Click atau metode berbasis tahan klik kiri seperti F3 + T.', 'Jail 6 Jam → Ban 7 hari → Ban permanen.'],
+        ['2.1.2.3', 'Auto Fish - Cheating/Unfair Advantage', 'Menggunakan sistem atau modifikasi memancing otomatis dalam bentuk apa pun. Pengecualian diberikan pada sistem AN-Mancing karena fitur tersebut memang memiliki mekanisme auto-fish bawaan.', 'Jail 6 Jam → Ban 7 hari → Ban permanen.'],
+        ['2.1.2.4', 'Hacked Client - Cheating/Unfair Advantage', 'Menggunakan Client Modifikasi/Hacked Client maupun program eksternal yang memberikan keuntungan tidak wajar dalam gameplay. Termasuk namun tidak terbatas pada: MiniMap, KillAura, Reach, Macro, Aimbot, ESP, Fly Hack, Speed Hack, Jesus, Scaffold, Inventory Move, Phase, Blink, TriggerBot, NoFall, Anti Knockback, Auto Totem, Fast Break, Script/Inject, Ghost Client, serta program pihak ketiga sejenis lainnya.', 'Ban permanen.'],
+        ['2.1.2.5', 'Litematica - Unfair Advantage', 'Penggunaan Litematica diperbolehkan, tetapi fitur-fitur tambahan yang memberikan keuntungan tidak adil terhadap player lain dalam bermain dilarang digunakan, seperti Easy Place, Printing, dan fitur sejenis lainnya.', 'Ban permanen.'],
+        ['2.1.3', 'Bug Abuse & Exploit', 'Menyalahgunakan bug, glitch, atau kesalahan sistem server untuk memperoleh keuntungan dalam bentuk apa pun, termasuk mencoba maupun menyebarkan exploit kepada pemain lain tanpa melaporkannya kepada staff.', 'Ban permanen.'],
+        ['2.1.3.1', 'Item Illegal - Bug Abuse & Exploit', 'Memiliki, menggunakan, menyimpan, atau memperdagangkan item, uang, maupun resource yang diperoleh melalui pelanggaran pada poin 2.1.3 akan ditindak sesuai regulasi yang berlaku.', 'Penghapusan Base/Stash + Ban permanen.'],
+        ['2.1.3.2', 'Proteksi Pemain - Bug Abuse & Exploit', 'Player yang melaporkan serta mendokumentasikan Bug atau Glitch sebagaimana dimaksud pada poin 2.1.3 akan diberikan penghargaan sesuai tingkat dan dampak bug/glitch tersebut.', 'Toleransi: Penyitaan Item + Pengurangan masa Ban (Jika terkena Sanksi).'],
+        ['2.1.4', 'Multi-Accounting', 'Memiliki lebih dari 3 akun (Bedrock/Java) dalam satu kepemilikan untuk menyalahgunakan fitur server.', 'Peringatan & Alt account di-ban → Akun utama ban 7 hari → Ban permanen.'],
+        ['2.1.5', 'Ban Evade', 'Mencoba menghindari sanksi dengan menggunakan akun lain. Apabila suatu akun menerima sanksi berat, yang mana berlaku terhadap semua pelanggaran berat, maka akun utama maupun akun alternatif yang digunakan akan dianggap melakukan pelanggaran Ban Evasion.', 'Ban permanen & Ban IP.'],
+        ['2.1.6', 'Mekanisme Redstone', 'Dilarang membuat loop, clock, maupun mekanisme otomatis berbasis redstone yang berjalan terus-menerus dan berpotensi menyebabkan lag atau mengganggu performa server.', 'Penghancuran Mekanisme & Peringatan → Jail 6 Jam → Ban 7 hari → Ban permanen.'],
+        ['2.1.7', 'Bot, Botting & Automasi', 'Dilarang menggunakan Bot, Botting, Script Automasi, maupun sistem berbasis AI yang menjalankan aktivitas permainan secara otomatis tanpa kontrol pemain secara langsung. Termasuk namun tidak terbatas pada: Auto Farming, Auto Mining, Auto Movement, AI Automation, Script Auto Task, Baritone, AutoCleft, Automatone, Bot Pihak ketiga dan sejenisnya.', 'Ban permanen.'],
+      ]},
+      { number: '2.2', title: 'Interaksi Antar Pemain', rules: [
+        ['2.2.1', 'Stealing', 'Mengambil, menguasai, atau memindahkan item milik pemain lain tanpa izin dari pemiliknya.', 'Penyitaan Item & 8-24 Jam (Bergantung pada beban hukuman) → Ban 7 hari → Ban permanen.'],
+        ['2.2.2', 'Griefing', 'Merusak properti pemain lain, membunuh entity milik orang lain, atau menghancurkan area sekitar — bahkan jika belum terproteksi secara resmi. Semua tindakan yang menunjukkan niat merusak atau mengganggu lingkungan komunitas akan dikenakan sanksi.', '8-12 Jam (Bergantung pada beban hukuman) → Ban 7 hari → Ban permanen.'],
+        ['2.2.3', 'PvP, Trapping, & Random Kill', 'Dilarang melakukan serangan PvP terhadap pemain lain tanpa persetujuan bersama. Selain itu, segala bentuk trapping atau penjebakan yang bertujuan untuk membunuh, menjebak, mengambil item, atau merugikan pemain lain secara sengaja juga tidak diperbolehkan. Setiap tindakan yang memanfaatkan mekanisme permainan untuk menciptakan kerugian bagi pemain lain tanpa persetujuan mereka akan dianggap sebagai pelanggaran.', 'Ban 7 hari + Clear Inventory/EnderChest → Ban 30 hari → Ban permanen.'],
+        ['2.2.4', 'Berbohong kepada Staff', 'Memberikan informasi palsu atau menyembunyikan informasi saat proses investigasi.', 'Klarifikasi → Ban 7 hari → Ban permanen.'],
+        ['2.2.5', 'Inappropriate Builds', 'Membangun konten yang mengandung vulgaritas, simbol politik/agama, atau provokasi.', 'Peringatan → Ban 3 hari → Ban permanen.'],
+        ['2.2.6', 'Inappropriate Warp/Guild Name/Island Name', 'Dilarang menggunakan nama Warp, Guild, Island, maupun nama terkait lainnya yang mengandung unsur tidak pantas, ofensif, provokatif, pornografi, diskriminasi, ujaran kebencian, penghinaan, atau hal lain yang melanggar aturan server.', 'Rename/Penghapusan Nama & Peringatan → Ban 3 Hari → Ban Permanen.'],
+      ]},
+      { number: '2.3', title: 'Komunikasi & Chat', rules: [
+        ['2.3.1', 'Spam & Flooding', 'Mengirim pesan secara berulang, berlebihan, tidak relevan, atau memenuhi chat dalam waktu singkat sehingga mengganggu kenyamanan pemain lain maupun aktivitas server. Termasuk spam teks, simbol, huruf berulang, maupun pesan yang dikirim secara terus-menerus.', 'Peringatan → Mute 10 menit → Mute 30 menit → Jail 3 Jam → Jail 6 Jam.'],
+        ['2.3.2', 'Iklan Tanpa Izin', 'Melakukan promosi server lain, media sosial, atau produk tanpa izin resmi staff.', 'Mute 24 jam → Ban 3 hari → Ban permanen.'],
+        ['2.3.3', 'Toxic Behavior & Bahasa Kasar', 'Dilarang melakukan toxic behavior, menghina, memprovokasi, melecehkan, maupun menggunakan bahasa kasar yang dapat mengganggu kenyamanan pemain lain. Termasuk namun tidak terbatas pada: Ucapan ofensif atau penghinaan berlebihan, Flaming dan tindakan yang memicu keributan, Pelecehan verbal, Pembahasan atau penyebaran unsur pornografi, Penghinaan, Pengejekan, Perkataan yang bersifat merendahkan, Diskriminatif, maupun tidak pantas. Peraturan ini berlaku di seluruh chat, voice chat, maupun media komunikasi lainnya yang berkaitan dengan server.', 'Peringatan → Mute 10 menit → Mute 30 menit → Ban 1 hari → Ban Permanen'],
+        ['2.3.3.1', 'Toxic Behavior & Bahasa Kasar - Non-Toleransi', 'Segala bentuk penghinaan, pelecehan, maupun pengejekan yang membawa nama orang tua, keluarga, maupun agama termasuk pelanggaran berat dan tidak memiliki toleransi. Termasuk namun tidak terbatas pada: Menghina orang tua atau keluarga pemain lain maupun Staff/Owner, Pelecehan terhadap agama atau kepercayaan tertentu, Ucapan yang bersifat merendahkan, menistakan, atau memprovokasi terkait keluarga maupun agama.', 'Ban permanen.'],
+        ['2.3.3.2', 'Toxic Behavior & Bahasa Kasar - Insulting Server & Staff', 'Dilarang melakukan penghinaan, pelecehan, fitnah, provokasi, ujaran kebencian, maupun tindakan lain yang bertujuan merendahkan, mencemarkan nama baik, atau menyerang Server Alwination, Staff Alwination, Owner, maupun anggota tim lainnya. Kritik, saran, dan masukan yang disampaikan secara sopan dan konstruktif tetap diperbolehkan. Namun, penyampaiannya harus dilakukan dengan cara yang baik dan tidak mengandung unsur penghinaan maupun serangan pribadi', 'Ban permanen.'],
+        ['2.3.4', 'Penyalahgunaan Command', 'Dilarang menggunakan command in-game secara tidak semestinya atau untuk tujuan yang mengganggu pemain lain maupun aktivitas server. Termasuk penggunaan simbol atau format command seperti [/], /ADS, /WTB, /WTS, /WORK untuk kepentingan selain showcase, demonstrasi, atau penggunaan command yang sebenarnya.', 'Peringatan + adsMute → Mute 10 menit → Mute 30 menit → → Jail 3 Jam → Jail 24 Jam.'],
+      ]},
+      { number: '2.4', title: 'Aktivitas Terlarang dan Pelanggaran Berat', rules: [
+        ['2.4.1', 'RMT & Trading', 'Melakukan transaksi Jual-beli akun, Balance, atau Item dengan uang nyata (IRL-trade/Cross-server trade), atau dengan imbalan Up-Rank & Credits.', 'Ban permanen/Ban IP.'],
+        ['2.4.1.1', 'RMT & Trading - Perencanaan', 'Segala bentuk perencanaan, percobaan, negosiasi, promosi, maupun upaya yang berkaitan dengan aktivitas Real Money Trading (RMT) akan dianggap sebagai pelanggaran dan ditindak sesuai ketentuan pada poin 2.4.1.', 'Ban Permanen/Ban IP.'],
+        ['2.4.1.2', 'RMT & Trading - In-Game Trade', 'Segala bentuk Transaksi, Pertukaran, maupun perdagangan antar Realm AlwiNation maupun dengan server di luar AlwiNation tidak diperbolehkan. Termasuk pertukaran item, uang, akun, maupun resource lintas Realm atau lintas Server.', 'Peringatan + Penyitaan Barang → Ban 30 hari → Ban permanen.'],
+        ['2.4.2', 'Scamming', 'Melakukan penipuan terhadap pemain lain dalam bentuk apa pun, termasuk Transaksi, Perdagangan, Peminjaman, Jasa, maupun Janji yang sengaja tidak ditepati untuk memperoleh keuntungan pribadi. Segala bentuk manipulasi, informasi palsu, maupun tindakan yang merugikan pemain lain akan dianggap sebagai pelanggaran.', 'Ban 7 hari + kompensasi → Ban permanen.'],
+        ['2.4.2.1', 'Scamming - Item Rename', 'Mengubah nama asli suatu item menjadi nama yang menyesatkan atau tidak sesuai dengan tujuan untuk menipu, memanipulasi, maupun mengelabui pemain lain demi keuntungan pribadi. Termasuk pemalsuan nama item yang menyerupai item bernilai lebih tinggi, item spesial, maupun item dengan fungsi tertentu.', 'Ban 3 hari + Kompensasi → Ban 7 hari → Ban permanen.'],
+        ['2.4.3', 'Pelecehan & Ancaman', 'Mengintimidasi, melecehkan, atau mendorong tindakan berbahaya terhadap diri sendiri atau orang lain.', 'Ban permanen.'],
+        ['2.4.4', 'Diskriminasi', 'Menghina berdasarkan suku, agama, ras, gender, orientasi seksual, atau kondisi fisik.', 'Ban permanen.'],
+        ['2.4.5', 'Melakukan Perjudian', 'Melakukan bentuk perjudian apapun, seperti taruhan uang, item, atau kegiatan game lain.', 'Jail 12 Jam → Ban permanen.'],
+      ]},
+    ],
+  },
+  {
+    number: '3', title: 'Peraturan Server Discord',
+    jurisdiction: 'Berlaku untuk semua aktivitas dan komunikasi di server Discord AlwiNation.',
+    groups: [
+      { number: '3.1', title: 'Etika Komunikasi', rules: [['3.1.1', 'Spam, Caps Lock, Promosi Spam', 'Dilarang mengirim spam, emoji berlebihan, atau caps lock berulang yang mengganggu kenyamanan.', 'Peringatan → Time Out 1 jam → Time Out 12 jam → Ban permanen.']] },
+      { number: '3.2', title: 'Konten dan Media', rules: [['3.2.1', 'NSFW & Link Berbahaya', 'Dilarang membagikan konten dewasa, kekerasan ekstrem, atau tautan berbahaya (phishing, virus).', 'Kick → Ban 7 hari → Ban permanen.']] },
+      { number: '3.3', title: 'Penggunaan Channel', rules: [
+        ['3.3.1', 'Voice Channel & Iklan', 'Gunakan voice channel dengan sopan. Hindari suara bising, interupsi, atau promosi tanpa izin yang mengganggu kenyamanan pengguna lain.', 'Peringatan → Kick/Time Out → Ban sementara.'],
+        ['3.3.2', 'Gunakan Channel Sesuai Topik', 'Pastikan setiap pesan atau aktivitas sesuai dengan fungsi channel. Spam, off-topic, atau penyalahgunaan saluran akan ditindak.', 'Peringatan → Kick/Time Out → Ban sementara.'],
+      ]},
+      { number: '3.4', title: 'Interaksi Staff', rules: [
+        ['3.4.1', 'Hormati Staff & Sistem Tiket', 'Hormati keputusan staff dan gunakan sistem tiket untuk semua bentuk komunikasi resmi terkait server. Staff tidak berkewajiban menanggapi pesan pribadi (DM) terkait permasalahan server. Diskusi diperbolehkan jika dilakukan secara sopan dan konstruktif.', 'Peringatan → Mute 6 jam → Ban 7 hari.'],
+        ['3.4.2', 'Meniru Staff', 'Dilarang menggunakan nama, format, gaya chat, atau tampilan yang menyerupai staff — baik dengan niat menipu maupun tidak. Hal ini dapat menimbulkan kebingungan, penyalahgunaan identitas, dan mengganggu kredibilitas sistem staff.', 'Peringatan → Ban permanen.'],
+      ]},
+      { number: '3.5', title: 'Keamanan & Privasi', rules: [
+        ['3.5.1', 'Info Pribadi & Data Server', 'Dilarang menyebarkan, membagikan, maupun memperjualbelikan data pribadi pemain, informasi internal staff, maupun data sensitif server tanpa izin resmi.', 'Peringatan → Ban 7 hari → Ban permanen.'],
+        ['3.5.2', 'Privasi Pemain & Pelanggar', 'Staff wajib menjaga privasi seluruh pemain maupun pelanggar selama proses penanganan kasus berlangsung. Informasi, bukti, maupun data terkait pelanggaran tidak diperbolehkan untuk disebarluaskan atau melibatkan pihak ketiga tanpa alasan dan kepentingan resmi yang berkaitan langsung dengan administrasi server.', ''],
+      ]},
+      { number: '3.6', title: 'Kode Etik dan Wewenang Staff', rules: [['3.6.1', 'Penyalahgunaan Wewenang Staff (Staff Abuse)', 'Semua staff wajib bertindak adil dan profesional. Dilarang menggunakan kekuasaan untuk kepentingan pribadi, balas dendam, atau memberi sanksi tanpa prosedur/bukti yang jelas.', 'Teguran internal → Penurunan jabatan → Suspensi staff → Pencopotan permanen (sesuai tingkat pelanggaran).']] },
+    ],
+  },
+  {
+    number: '4', title: 'Sanksi dan Penindakan', groups: [
+      { number: '4.1', title: 'Jenis Sanksi', rules: [
+        ['4.1', 'Jenis Sanksi', 'Jenis sanksi yang dapat diberikan oleh staff meliputi:', 'Peringatan: Teguran lisan atau tertulis dari staff.\nMute: Pemblokiran sementara untuk mengirim pesan di chat.\nJail: Penahanan karakter dalam game untuk jangka waktu tertentu.\nKick: Mengeluarkan pemain dari server sementara.\nBan Sementara: Pemblokiran akses sementara ke server.\nBan Permanen: Pemblokiran akses permanen ke server.\nPenghapusan Konten: Penghapusan bangunan, pesan, atau konten lain yang melanggar peraturan.\n\nCatatan Penting: Sanksi yang tercantum pada setiap aturan merupakan sanksi maksimal yang dapat dijatuhkan. Staff berhak memberikan sanksi yang lebih ringan berdasarkan konteks, tingkat kesalahan, dan riwayat pelanggaran. Namun, staff tidak diperbolehkan memberikan sanksi yang lebih berat dari yang tercantum tanpa persetujuan High Staff.'],
+      ]},
+      { number: '4.2', title: 'Prosedur Penindakan', rules: [['4.2', 'Prosedur Penindakan', 'Setiap penindakan dilakukan melalui tahapan prosedural yang adil:', 'Investigasi: Staff akan melakukan penyelidikan terhadap laporan atau temuan pelanggaran dengan mengumpulkan bukti.\nBukti: Keputusan sanksi harus berdasarkan bukti kuat, seperti screenshot, log, atau saksi terpercaya. Apabila tidak mengikuti prosedur sesuai yang diminta akan langsung diajukan ke ban permanent dan tiket akan ditutup.\nKomunikasi: Staff akan menginformasikan alasan sanksi kepada pemain (kecuali dalam pelanggaran berat yang jelas).\nBanding: Pemain memiliki hak untuk mengajukan banding melalui sistem tiket dalam waktu 7 hari setelah sanksi dijatuhkan.\nKeputusan Final: Keputusan High Staff bersifat mutlak dan tidak dapat diganggu gugat.']] },
+      { number: '4.3', title: 'Durasi Pelanggaran', rules: [
+        ['4.3.1', 'Sanksi Lebih Berat', 'Pelanggaran yang dilakukan secara berulang akan dikenakan sanksi yang lebih berat dari hukuman sebelumnya. Tingkat sanksi akan disesuaikan berdasarkan riwayat pelanggaran, tingkat kesalahan, serta dampak yang ditimbulkan terhadap pemain lain maupun server.', ''],
+        ['4.3.1.1', 'Sanksi Lebih Berat - Akumulasi', 'Seluruh hukuman bersifat akumulatif dan dapat digabungkan dengan sanksi dari pelanggaran lainnya. Apabila seorang pemain terbukti melakukan beberapa pelanggaran sekaligus atau menerima pelanggaran berat yang berulang, staff berhak menjatuhkan sanksi yang lebih tinggi sesuai tingkat pelanggaran. Sebagai contoh, akumulasi dua pelanggaran yang masing-masing berujung pada Ban Permanen dapat ditingkatkan menjadi Ban IP atau sanksi yang lebih berat sesuai keputusan staff.', ''],
+        ['4.3.2', 'Zero Tolerance', 'Untuk pelanggaran berat, tidak ada toleransi dan akan langsung diberikan sanksi maksimal.', ''],
+      ]},
+      { number: '4.4', title: 'Hak Pemain atas Banding dan Informasi', rules: [
+        ['4.4', 'Hak Pemain atas Banding dan Informasi', 'Semua pemain memiliki hak untuk mengetahui alasan sanksi dan berhak mengajukan banding resmi melalui sistem tiket.', ''],
+        ['4.4.1', 'Transparansi', 'Staff wajib memberikan penjelasan yang masuk akal atas sanksi, kecuali dalam kasus sensitif atau berbahaya.', ''],
+        ['4.4.2', 'Hak Banding', 'Setiap pemain boleh mengajukan banding satu kali per sanksi, maksimal 7 hari setelah keputusan dijatuhkan.', ''],
+        ['4.4.3', 'Jalur Resmi', 'Banding hanya diterima melalui sistem tiket. Permintaan melalui DM, chat umum, atau jalur tidak resmi akan diabaikan.', ''],
+        ['4.4.4', 'Keputusan Final', 'Setelah proses banding selesai, keputusan akhir berada di tangan High Staff dan bersifat mutlak.', ''],
+        ['4.4.4.1', 'Keputusan Final - Supervisor', 'Keputusan yang ditetapkan oleh Supervisor bersifat final dan tidak dapat diajukan banding, kecuali apabila terdapat pertimbangan khusus atau dispensasi dari Supervisor lain yang berwenang.', ''],
+        ['4.4.4.2', 'Keputusan Final - Blacklist', 'Status Blacklist hanya dapat diberikan oleh Supervisor dan merupakan sanksi permanen. Hukuman ini dapat berlaku terhadap seluruh akun yang terafiliasi dengan pelanggar, termasuk akun alternatif maupun pihak lain yang terbukti terlibat dalam pelanggaran yang sama.', ''],
+      ]},
+    ],
+  },
+  {
+    number: '5', title: 'Ketentuan Tambahan', groups: [{ number: '5', title: 'Ketentuan Tambahan', rules: [
+      ['5.1', 'Perubahan Peraturan', 'Peraturan dapat berubah sewaktu-waktu sesuai dengan kebutuhan, perkembangan komunitas, atau kebijakan internal dari tim AlwiNation. Pemain diimbau untuk selalu memeriksa pembaruan peraturan secara berkala.', ''],
+      ['5.2', 'Kewajiban Pemain', 'Ketidaktahuan terhadap peraturan tidak membebaskan pemain dari sanksi. Setiap pemain wajib membaca, memahami, dan mengikuti seluruh peraturan yang berlaku di komunitas ini.', ''],
+      ['5.3', 'Hak Cipta dan Kepemilikan', 'Semua konten, struktur, sistem, dan aset yang ada dalam server merupakan hak cipta milik AlwiNation. Dilarang menyalin, memodifikasi, atau mendistribusikan konten tanpa izin tertulis dari pemilik server.', ''],
+      ['5.4', 'Batasan Tanggung Jawab', 'AlwiNation tidak bertanggung jawab atas kerusakan atau kerugian yang terjadi akibat kelalaian pemain, termasuk namun tidak terbatas pada kehilangan item, data, akun, atau kerugian akibat akses tidak sah.', ''],
+    ]}] },
+  { number: '6', title: 'Penutup', groups: [{ number: '6', title: 'Penutup', rules: [['6', 'Penutup', 'Terima kasih telah menjadi bagian dari komunitas AlwiNation. Dengan menaati peraturan ini, kita bersama-sama menciptakan tempat bermain yang aman, nyaman, dan adil bagi semua pemain.\n\nJika kamu membutuhkan bantuan atau memiliki pertanyaan terkait peraturan, silakan gunakan sistem tiket melalui ・ᴛɪᴄᴋᴇᴛꜱ dan hubungi staff resmi kami.\n\nMari kita ciptakan petualangan yang penuh kenangan dan komunitas yang tumbuh bersama dengan semangat kebersamaan dan rasa saling menghargai.\n\nAlwiNation — Petualangan Tanpa Batas.\nUpdated — 13/08/2026', '']] }] },
+];
+
+let regulationState = { query: '', section: 'all' };
+
+function regulationRuleMarkup(rule) {
+  const [number, title, content, sanctions] = rule;
+  const text = escapeHtml(content).replace(/\n/g, '<br>');
+  return `<details class="regulation-rule" data-regulation-search="${escapeHtml(`${number} ${title} ${content} ${sanctions}`.toLowerCase())}"><summary><span class="regulation-number">${escapeHtml(number)}</span><span>${escapeHtml(title)}</span></summary><div class="regulation-rule-body"><p>${text}</p>${sanctions ? `<div class="regulation-sanction"><strong>Sanksi:</strong><span>${escapeHtml(sanctions).replace(/\n/g, '<br>')}</span></div>` : ''}</div></details>`;
+}
+
+function regulationSectionsMarkup(query) {
+  return REGULATION_SECTIONS.map(section => {
+    const sectionText = `${section.number} ${section.title} ${section.jurisdiction || ''}`.toLowerCase();
+    const groups = section.groups.map(group => {
+      const rules = group.rules.filter(rule => !query || `${group.number} ${group.title} ${rule.join(' ')}`.toLowerCase().includes(query));
+      if (query && !rules.length && !sectionText.includes(query)) return '';
+      return `<div class="regulation-group"><h3>${escapeHtml(group.number)} ${escapeHtml(group.title)}</h3>${rules.map(regulationRuleMarkup).join('')}</div>`;
+    }).join('');
+    if (!groups || (query && !groups.includes('regulation-rule') && !sectionText.includes(query))) return '';
+    return `<section class="regulation-section" id="regulation-section-${escapeHtml(section.number)}" data-regulation-section="${escapeHtml(section.number)}"><div class="regulation-section-heading"><span class="regulation-section-number">${escapeHtml(section.number)}</span><div><h2>${escapeHtml(section.title)}</h2>${section.jurisdiction ? `<p><strong>Yurisdiksi:</strong> ${escapeHtml(section.jurisdiction)}</p>` : ''}</div></div>${groups}</section>`;
+  }).join('');
+}
+
+function updateRegulationResults() {
+  const list = MAIN.querySelector('.regulation-list');
+  if (!list) return;
+  const query = regulationState.query.trim().toLowerCase();
+  list.innerHTML = regulationSectionsMarkup(query) || '<div class="empty-state"><div class="empty-state-icon">⌕</div><div class="empty-state-text">Tidak ada peraturan yang cocok.</div></div>';
+  if (regulationState.section !== 'all') {
+    const target = MAIN.querySelector(`[data-regulation-section="${CSS.escape(regulationState.section)}"]`);
+    MAIN.querySelectorAll('.regulation-section').forEach(section => { section.hidden = section !== target; });
+  }
+}
+
+function renderRegulation() {
+  const sections = regulationSectionsMarkup(regulationState.query.trim().toLowerCase());
+  const contents = REGULATION_SECTIONS.map(s => `<li><a href="#regulation-section-${s.number}">${s.number}. ${escapeHtml(s.title)}</a></li>`).join('');
+  const html = `<div class="page-header regulation-header">${breadcrumb([{ label: 'Dashboard', target: '#/' }, { label: 'Regulation' }])}
+  <div class="eyebrow">AlwiNation Community Guidelines</div>
+  <h1 class="page-title">Regulation</h1>
+  <p class="page-subtitle">Peraturan resmi AlwiNation — baca, cari, dan telusuri setiap ketentuan tanpa mengubah isi aslinya.</p>
+  </div>
+  <div class="regulation-intro">
+ 
+  <div class="regulation-controls">
+  <label class="regulation-search">
+  <span>⌕</span><input id="regulationSearch" type="search" value="${escapeHtml(regulationState.query)}" placeholder="Cari nomor, judul, atau isi peraturan..." aria-label="Cari peraturan"></label><label class="regulation-filter">Bagian<select id="regulationSectionFilter"><option value="all">Semua bagian</option>${REGULATION_SECTIONS.map(s => `<option value="${s.number}" ${regulationState.section === s.number ? 'selected' : ''}>${s.number}. ${escapeHtml(s.title)}</option>`).join('')}</select></label></div><div class="regulation-list">${sections || '<div class="empty-state"><div class="empty-state-icon">⌕</div><div class="empty-state-text">Tidak ada peraturan yang cocok.</div></div>'}</div>`;
+  render(MAIN, html);
+  updateRegulationResults();
+}
+
 // ---- NOT FOUND ----
 
 function renderNotFound() {
@@ -1003,9 +1181,11 @@ if (typeof window !== 'undefined') {
   window.renderCommandDetail = renderCommandDetail;
   window.renderStaffRole = renderStaffRole;
   window.renderStaffList = renderStaffList;
+  window.renderStaffFeatures = renderStaffFeatures;
   window.renderCoreProtect = renderCoreProtect;
   window.renderJavaBedrock = renderJavaBedrock;
   window.renderServerRealm = renderServerRealm;
+  window.renderRegulation = renderRegulation;
   window.renderAbout = renderAbout;
   window.renderNotFound = renderNotFound;
 }
