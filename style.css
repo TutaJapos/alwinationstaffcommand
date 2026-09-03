@@ -326,6 +326,7 @@ body.authenticated .login-screen {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding-bottom: 8px;
 }
 
@@ -387,21 +388,6 @@ body.authenticated .login-screen {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.sidebar-footer {
-  flex-shrink: 0;
-  min-height: 34px;
-  background: var(--bg-elevated);
-  padding-top: 14px;
-  border-top: 1px solid var(--border-soft);
-  margin-top: 8px;
-}
-
-.sidebar-version {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-family: var(--mono);
 }
 
 /* --------------------------------------------------------------------------
@@ -1989,6 +1975,8 @@ p { color: var(--text-muted); }
   }
 
   .sidebar {
+    width: min(248px, calc(100vw - 28px));
+    max-width: calc(100vw - 28px);
     height: 100dvh;
     padding-bottom: max(20px, env(safe-area-inset-bottom));
     transform: translateX(-100%);
