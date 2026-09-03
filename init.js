@@ -60,7 +60,7 @@
 
   async function checkSession() {
     if (DEV_BYPASS_LOGIN) {
-      setAuthenticated(true); // true for enable dev bypass login
+      setAuthenticated(false); // true for enable dev bypass login
       return;
     }
 
