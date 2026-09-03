@@ -187,7 +187,6 @@
       if (href && href.startsWith('#')) {
         e.preventDefault();
         navigate(href);
-        closeMobile();
         return;
       }
     }
@@ -250,6 +249,33 @@
   if (mobileOverlay) {
     mobileOverlay.addEventListener('click', closeMobile);
   }
+
+  // ---- SIDEBAR: swipe gestures on touch devices ----
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchStartedInSidebar = false;
+
+  document.addEventListener('touchstart', (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+    touchStartedInSidebar = sidebar.contains(event.target);
+  }, { passive: true });
+
+  document.addEventListener('touchend', (event) => {
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+    if (!sidebar.classList.contains('open') && touchStartX <= 28 && deltaX > 0) {
+      openMobile();
+    } else if (sidebar.classList.contains('open') && touchStartedInSidebar && deltaX < 0) {
+      closeMobile();
+    }
+  }, { passive: true });
 
   // ---- SEARCH OVERLAY ----
   let selectedIndex = -1;
