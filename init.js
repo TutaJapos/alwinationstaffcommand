@@ -187,6 +187,7 @@
       if (href && href.startsWith('#')) {
         e.preventDefault();
         navigate(href);
+        if (window.matchMedia('(max-width: 768px)').matches) closeMobile();
         return;
       }
     }
@@ -258,6 +259,7 @@
   document.addEventListener('touchstart', (event) => {
     const touch = event.changedTouches[0];
     if (!touch) return;
+    if (touch.target.closest('input, select, textarea, button')) return;
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     touchStartedInSidebar = sidebar.contains(event.target);
@@ -268,9 +270,9 @@
     if (!touch) return;
     const deltaX = touch.clientX - touchStartX;
     const deltaY = touch.clientY - touchStartY;
-    if (Math.abs(deltaX) < 60 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+    if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
 
-    if (!sidebar.classList.contains('open') && touchStartX <= 28 && deltaX > 0) {
+    if (!sidebar.classList.contains('open') && touchStartX <= 60 && deltaX > 0) {
       openMobile();
     } else if (sidebar.classList.contains('open') && touchStartedInSidebar && deltaX < 0) {
       closeMobile();
