@@ -1106,7 +1106,7 @@ let regulationState = { query: '', section: 'all' };
 function regulationRuleMarkup(rule) {
   const [number, title, content, sanctions] = rule;
   const text = escapeHtml(content).replace(/\n/g, '<br>');
-  return `<details class="regulation-rule" data-regulation-search="${escapeHtml(`${number} ${title} ${content} ${sanctions}`.toLowerCase())}"><summary><span class="regulation-number">${escapeHtml(number)}</span><span>${escapeHtml(title)}</span></summary><div class="regulation-rule-body"><p>${text}</p>${sanctions ? `<div class="regulation-sanction"><strong>Sanksi:</strong><span>${escapeHtml(sanctions).replace(/\n/g, '<br>')}</span></div>` : ''}</div></details>`;
+  return `<details class="regulation-rule" name="regulation-rule" data-regulation-search="${escapeHtml(`${number} ${title} ${content} ${sanctions}`.toLowerCase())}"><summary><span class="regulation-number">${escapeHtml(number)}</span><span>${escapeHtml(title)}</span></summary><div class="regulation-rule-body"><p>${text}</p>${sanctions ? `<div class="regulation-sanction"><strong>Sanksi:</strong><span>${escapeHtml(sanctions).replace(/\n/g, '<br>')}</span></div>` : ''}</div></details>`;
 }
 
 function regulationSectionsMarkup(query) {
