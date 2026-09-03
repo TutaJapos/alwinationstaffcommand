@@ -60,7 +60,7 @@
 
   async function checkSession() {
     if (DEV_BYPASS_LOGIN) {
-      setAuthenticated(false); // true for enable dev bypass login
+      setAuthenticated(true); // true for enable dev bypass login
       return;
     }
 
@@ -186,8 +186,8 @@
       const href = link.getAttribute('href');
       if (href && href.startsWith('#')) {
         e.preventDefault();
+        if (sidebar.classList.contains('open')) closeMobile();
         navigate(href);
-        if (window.matchMedia('(max-width: 768px)').matches) closeMobile();
         return;
       }
     }
@@ -251,6 +251,11 @@
     mobileOverlay.addEventListener('click', closeMobile);
   }
 
+  sidebar.addEventListener('click', (event) => {
+    const link = event.target.closest('.nav-item[href^="#/"]');
+    if (link && sidebar.classList.contains('open')) closeMobile();
+  });
+
   // ---- SIDEBAR: swipe gestures on touch devices ----
   let touchStartX = 0;
   let touchStartY = 0;
@@ -259,7 +264,8 @@
   document.addEventListener('touchstart', (event) => {
     const touch = event.changedTouches[0];
     if (!touch) return;
-    if (touch.target.closest('input, select, textarea, button')) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('input, select, textarea, button')) return;
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
     touchStartedInSidebar = sidebar.contains(event.target);
@@ -272,12 +278,34 @@
     const deltaY = touch.clientY - touchStartY;
     if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
 
-    if (!sidebar.classList.contains('open') && touchStartX <= 60 && deltaX > 0) {
+    if (!sidebar.classList.contains('open') && !touchStartedInSidebar && deltaX > 0) {
       openMobile();
     } else if (sidebar.classList.contains('open') && touchStartedInSidebar && deltaX < 0) {
       closeMobile();
     }
   }, { passive: true });
+
+  // iOS can retarget edge touches to the overlay, so also listen directly on
+  // the two surfaces involved in opening and closing the mobile sidebar.
+  [MAIN, mobileOverlay, sidebar].forEach((surface) => {
+    if (!surface) return;
+    surface.addEventListener('touchstart', (event) => {
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchStartedInSidebar = surface === sidebar;
+    }, { passive: true });
+    surface.addEventListener('touchend', (event) => {
+      const touch = event.changedTouches[0];
+      if (!touch) return;
+      const deltaX = touch.clientX - touchStartX;
+      const deltaY = touch.clientY - touchStartY;
+      if (Math.abs(deltaX) < 45 || Math.abs(deltaX) <= Math.abs(deltaY)) return;
+      if (!sidebar.classList.contains('open') && !touchStartedInSidebar && deltaX > 0) openMobile();
+      if (sidebar.classList.contains('open') && touchStartedInSidebar && deltaX < 0) closeMobile();
+    }, { passive: true });
+  });
 
   // ---- SEARCH OVERLAY ----
   let selectedIndex = -1;

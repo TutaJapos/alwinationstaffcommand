@@ -1980,6 +1980,7 @@ p { color: var(--text-muted); }
     height: 100dvh;
     padding-bottom: max(20px, env(safe-area-inset-bottom));
     transform: translateX(-100%);
+    touch-action: pan-y;
   }
 
   .sidebar.open {
@@ -1999,6 +2000,7 @@ p { color: var(--text-muted); }
     max-width: none;
     margin: 0;
     padding: 20px 16px 60px;
+    touch-action: pan-y;
   }
 
   .app-layout {
