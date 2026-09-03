@@ -966,7 +966,6 @@ function renderAbout() {
     </div>
 
     <div class="about-footer">
-      AlwiNation Command Staff v1.0.0<br>
       <span style="font-size:11px;">Built for the AlwiNation Minecraft Server community.</span>
     </div>
   `;

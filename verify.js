@@ -172,7 +172,6 @@ console.log('\n--- About ---');
 sandbox.renderAbout();
 const aboutHTML = sandbox.window.MAIN.innerHTML;
 console.log('Has About title:', aboutHTML.includes('About'));
-console.log('Has v1.0.0:', aboutHTML.includes('v1.0.0'));
 
 // ---- Commands page (all) ----
 console.log('\n--- Commands Page (All) ---');
